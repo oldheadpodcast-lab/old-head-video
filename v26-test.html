@@ -216,6 +216,11 @@ async function shareWatch(key){
  for(let y=50;y<1300;y+=6){ctx.fillStyle='rgba(230,213,179,.025)';ctx.fillRect(50,y,980,1)}
  let seed=12345;for(let i=0;i<8500;i++){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const x=seed%1080;seed=(Math.imul(seed,1664525)+1013904223)>>>0;const y=seed%1350;ctx.fillStyle=i%2?'rgba(255,237,202,.035)':'rgba(0,0,0,.045)';ctx.fillRect(x,y,2,2)}
  overlay.querySelector('#shareStatus').textContent=img?'Preview ready.':'Artwork unavailable; branded card is ready.';
- const save=overlay.querySelector('#shareSave');save.disabled=false;save.onclick=()=>{try{canvas.toBlob(blob=>{if(!blob){alert('Unable to export this image.');return}const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='old-head-video-'+m.title.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)},'image/png')}catch(e){alert('The poster image cannot be exported due to image permissions.')}};
+ const save=overlay.querySelector('#shareSave');save.disabled=false;save.onclick=()=>{try{canvas.toBlob(blob=>{if(!blob){alert('Unable to export this image.');return}const filename='old-head-video-'+m.title.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.png';
+const download=()=>{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000)};
+const file=new File([blob],filename,{type:'image/png'});
+if(navigator.share&&navigator.canShare&&navigator.canShare({files:[file]})){
+navigator.share({files:[file],title:'Old Head Video — '+m.title}).catch(err=>{if(err.name!=='AbortError')download()});
+}else download()},'image/png')}catch(e){alert('The poster image cannot be exported due to image permissions.')}};
 }
 </script></html>
