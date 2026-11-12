@@ -175,7 +175,17 @@ function renderDashboard(){
  <div class="dash-grid">${dashboardPanel('UP NEXT','Up Next',`${upcoming.length} more movies in the current lineup`,qItems)}${dashboardPanel('MY COLLECTION','Collection',`${state.movies.length} movies on your shelves`,cItems)}${dashboardPanel('WATCH HISTORY','History',`${state.history.length} watch entries`,hItems)}${dashboardPanel('VIEWING PATHS','Viewing Paths',`${paths.length} curated paths`,pathShow)}</div>
  <div class="dash-rewind">BE KIND, REWIND ◀◀</div>`;
 }
-setInterval(()=>{if(tab==='Home'&&!editId&&!tmdbModal&&!ratingPromptId){dashboardSlide++;render()}},5000);
+// Rotate only the four poster-preview panels. Keep Now Showing mounted and unchanged.
+setInterval(()=>{
+ if(tab!=='Home'||editId||tmdbModal||ratingPromptId)return;
+ const grid=document.querySelector('.dash-grid');
+ if(!grid)return;
+ dashboardSlide++;
+ const template=document.createElement('template');
+ template.innerHTML=renderDashboard();
+ const updatedGrid=template.content.querySelector('.dash-grid');
+ if(updatedGrid)grid.replaceChildren(...updatedGrid.childNodes);
+},5000);
 
 function render(){document.getElementById('nav').innerHTML=tabs.map(t=>`<button class="${t===tab?'active':''}" onclick="setTab('${t}')">${t}</button>`).join('');let out=tab==='Home'?'':`<div class="page-return"><button onclick="setTab('Home')">← Home Dashboard</button></div>`;if(notice){out+=`<div class="notice">${esc(notice)}</div>`;notice=''}
 if(tab==='Home'&&!editId){out+=renderDashboard()}
