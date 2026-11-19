@@ -373,13 +373,30 @@ function randomPreview(arr,n=3){
  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
  return pool.slice(0,n);
 }
-// Deterministic daily selection: changes on the next local calendar day, not on every render.
+// Keep the featured VHS fixed for each local calendar day, even when the collection changes.
+// Stored separately from the collection so it does not alter or risk existing VHS data.
+const FEATURED_VHS_KEY='ohv-featured-vhs-daily-v30610';
+let featuredVhsSession=null;
 function featuredVhs(){
  if(!state.movies.length)return null;
- const date=todayLocal();let hash=2166136261;
+ const date=todayLocal();
+ let pick=featuredVhsSession;
+ if(!pick){try{pick=JSON.parse(localStorage.getItem(FEATURED_VHS_KEY)||'null')}catch(e){pick=null}}
+ if(pick?.date===date){
+  featuredVhsSession=pick;
+  const selected=state.movies.find(m=>String(m.id)===String(pick.id));
+  if(selected)return selected;
+ }
+ // New day (or a featured title was deleted): choose a stable, date-based movie.
+ let hash=2166136261;
  for(const c of date+'|old-head-video-featured-v303'){hash=Math.imul(hash^c.charCodeAt(0),16777619)}
  const ordered=state.movies.slice().sort((a,b)=>String(a.id).localeCompare(String(b.id)));
- return ordered[(hash>>>0)%ordered.length];
+ let index=(hash>>>0)%ordered.length;
+ if(ordered.length>1&&pick?.date!==date&&String(ordered[index].id)===String(pick?.id))index=(index+1)%ordered.length;
+ const selected=ordered[index];
+ featuredVhsSession={date,id:selected.id};
+ try{localStorage.setItem(FEATURED_VHS_KEY,JSON.stringify(featuredVhsSession))}catch(e){console.warn('Featured VHS daily preference could not be saved:',e)}
+ return selected;
 }
 function featuredHistory(m){return sortedHistory().find(h=>h.id===m.id)||null}
 function renderFeaturedVhs(){
